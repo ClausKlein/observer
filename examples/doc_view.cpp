@@ -22,7 +22,6 @@ class Document {
  public:
   typedef boost::signals2::signal<void()> signal_t;
 
- public:
   Document() = default;
 
   // Connect a slot to the signal which will be emitted whenever text is appended to the document.
@@ -46,9 +45,17 @@ class Document {
 /// text_view_def_code_snippet
 class TextView {
  public:
-  TextView(Document& doc) : m_document(doc) { m_connection = m_document.connect(std::bind(&TextView::refresh, this)); }
+  explicit TextView(Document& doc) : m_document(doc) {
+    m_connection = m_document.connect(std::bind(&TextView::refresh, this));
+  }
 
-  ~TextView() { m_connection.disconnect(); }
+  ~TextView() {
+    try {
+      m_connection.disconnect();
+    } catch (...) {
+      ;  // ignored
+    }
+  }
 
   void refresh() const { std::cout << "TextView: " << m_document.getText() << std::endl; }
 
@@ -60,9 +67,17 @@ class TextView {
 /// hex_view_def_code_snippet
 class HexView {
  public:
-  HexView(Document& doc) : m_document(doc) { m_connection = m_document.connect(std::bind(&HexView::refresh, this)); }
+  explicit HexView(Document& doc) : m_document(doc) {
+    m_connection = m_document.connect(std::bind(&HexView::refresh, this));
+  }
 
-  ~HexView() { m_connection.disconnect(); }
+  ~HexView() {
+    try {
+      m_connection.disconnect();
+    } catch (...) {
+      ;  // ignored
+    }
+  }
 
   void refresh() const {
     const std::string& s = m_document.getText();
@@ -86,24 +101,29 @@ class HexView {
 int main(int argc, char* argv[]) {
   using namespace std::chrono_literals;
 
-  Document doc;
-  TextView v1(doc); // NOTE: The Document must exists as long as the view! CK
+  try {
+    Document doc;
+    TextView v1(doc);  // NOTE: The Document must exists as long as the view! CK
 
-  auto result = std::thread([&] {
-    HexView v2(doc);
-    std::this_thread::sleep_for(100us);
-    doc.append(" ... conccurend signal!");
-    std::this_thread::sleep_for(100us);
-    doc.append(" ... conccurend signal!");
-    std::this_thread::sleep_for(100us);
-    doc.append(" ... conccurend signal!");
-  });
+    auto result = std::thread([&] {
+      HexView v2(doc);
+      std::this_thread::sleep_for(100us);
+      doc.append(" ... conccurend signal!");
+      std::this_thread::sleep_for(100us);
+      doc.append(" ... conccurend signal!");
+      std::this_thread::sleep_for(100us);
+      doc.append(" ... conccurend signal!");
+    });
 
-  std::this_thread::sleep_for(123us);
-  doc.append(argc == 2 ? argv[1] : " Hello world!");
+    std::this_thread::sleep_for(123us);
+    doc.append(argc == 2 ? argv[1] : " Hello world!");
 
-  result.join();
-  doc.append(" ... Again, but without HexView!");
+    result.join();
+    doc.append(" ... Again, but without HexView!");
+  } catch (const std::exception& ex) {
+    std::cerr << ex.what() << std::endl;
+    return 1;
+  }
 
   return 0;
 }
