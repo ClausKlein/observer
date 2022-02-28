@@ -1,7 +1,7 @@
 CXX = clang++
 CXXFLAGS = -std=c++20 -Wall -Wextra -Wpedantic -O1
 CPPFLAGS = -I include -I/usr/local/include
-LDFLAGS  = -fsanitize=thread
+LDFLAGS  =
 
 EXAMPLEDIR = examples
 TESTDIR = test
@@ -25,10 +25,10 @@ BENCHMARKS = $(patsubst $(OBJDIR)/%.o, $(OUTDIR)/%, $(BENCHMARKOBJECTS))
 all: tests examples benchmarks
 
 $(OBJDIR):
-	test ! -d $(OBJDIR) && mkdir $(OBJDIR)
+	mkdir -p $(OBJDIR)
 
 $(OUTDIR):
-	test ! -d $(OUTDIR) && mkdir $(OUTDIR)
+	mkdir -p $(OUTDIR)
 
 tests: $(OBJDIR) $(OUTDIR) $(TESTS)
 
