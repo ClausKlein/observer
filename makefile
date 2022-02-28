@@ -1,7 +1,7 @@
-CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -Wpedantic -O3
-INCLUDES = -I "./src"
-LDFLAGS =
+CXX = clang++
+CXXFLAGS = -std=c++20 -Wall -Wextra -Wpedantic -O1
+CPPFLAGS = -I include -I/usr/local/include
+LDFLAGS  = -fsanitize=thread
 
 EXAMPLEDIR = examples
 TESTDIR = test
@@ -21,39 +21,42 @@ BENCHMARKSOURCES = $(shell find $(BENCHMARKDIR) -type f -name '*.cpp')
 BENCHMARKOBJECTS = $(patsubst $(BENCHMARKDIR)/%.cpp, $(OBJDIR)/%.o, $(BENCHMARKSOURCES))
 BENCHMARKS = $(patsubst $(OBJDIR)/%.o, $(OUTDIR)/%, $(BENCHMARKOBJECTS))
 
-.phony: clean tests examples benchmarks
+.phony: all clean tests examples benchmarks
+all: tests examples benchmarks
 
 $(OBJDIR):
 	test ! -d $(OBJDIR) && mkdir $(OBJDIR)
-	
+
 $(OUTDIR):
 	test ! -d $(OUTDIR) && mkdir $(OUTDIR)
-	
-all: tests examples benchmarks
 
-tests:$(OBJDIR) $(OUTDIR) $(TESTS) 
+tests: $(OBJDIR) $(OUTDIR) $(TESTS)
 
 $(TESTS): $(TESTOBJECTS)
 	$(CXX) $(LDFLAGS) -o $@ $(patsubst $(OUTDIR)%, $(OBJDIR)%.o, $@)
+	$(@)
 
 $(TESTOBJECTS): $(TESTSOURCES)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $(patsubst $(OBJDIR)%.o, $(TESTDIR)%.cpp, $@) -o $@
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $(patsubst $(OBJDIR)%.o, $(TESTDIR)%.cpp, $@) -o $@
 
-examples:$(OBJDIR) $(OUTDIR) $(EXAMPLES) 
+examples: $(OBJDIR) $(OUTDIR) $(EXAMPLES)
 
+$(EXAMPLES): LDFLAGS += -fsanitize=thread
+$(EXAMPLES): CXXFLAGS += -fsanitize=thread
 $(EXAMPLES): $(EXAMPLEOBJECTS)
 	$(CXX) $(LDFLAGS) -o $@ $(patsubst $(OUTDIR)%, $(OBJDIR)%.o, $@)
 
 $(EXAMPLEOBJECTS): $(EXAMPLESOURCES)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $(patsubst $(OBJDIR)%.o, $(EXAMPLEDIR)%.cpp, $@) -o $@
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $(patsubst $(OBJDIR)%.o, $(EXAMPLEDIR)%.cpp, $@) -o $@
 
-benchmarks:$(OBJDIR) $(OUTDIR) $(BENCHMARKS)
+benchmarks: $(OBJDIR) $(OUTDIR) $(BENCHMARKS)
 
 $(BENCHMARKS): $(BENCHMARKOBJECTS)
 	$(CXX) $(LDFLAGS) -o $@ $(patsubst $(OUTDIR)%, $(OBJDIR)%.o, $@)
-	
+	$(@)
+
 $(BENCHMARKOBJECTS): $(BENCHMARKSOURCES)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $(patsubst $(OBJDIR)%.o, $(BENCHMARKDIR)%.cpp, $@) -o $@
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $(patsubst $(OBJDIR)%.o, $(BENCHMARKDIR)%.cpp, $@) -o $@
 
 clean:
 	rm -rf $(OBJDIR)

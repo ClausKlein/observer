@@ -1,14 +1,15 @@
 #include <observer.h>
 #include <functional>
+#include <atomic>
 #include <chrono>
 #include <cstdio>
 
 using namespace std;
 using namespace std::chrono;
 
-volatile int count_value = 0;
-int          iterations  = 100000000;
-volatile int increment   = 1;
+std::atomic<int> count_value = 0;
+int              iterations  = 100000000;
+constexpr int    increment   = 1;
 
 
 void increase_count( int value )
