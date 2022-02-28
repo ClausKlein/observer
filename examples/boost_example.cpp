@@ -11,12 +11,11 @@
 // For more information, see http://www.boost.org
 
 #include <boost/io/ios_state.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/signals2/signal.hpp>
-// XXX #include <boost/smart_ptr/make_shared.hpp>
 
 #include <chrono>
 #include <iostream>
+#include <memory>
 #include <string>
 #include <thread>
 
@@ -28,7 +27,7 @@ class Document {
   typedef boost::signals2::signal<void()> signal_t;
 
  public:
-  Document() {}
+  Document() = default;
 
   // connect a slot to the signal which will be emitted whenever text is appended to the document.
   boost::signals2::connection connect(const signal_t::slot_type& subscriber) { return m_sig.connect(subscriber); }
@@ -51,13 +50,12 @@ class Document {
 class TextView {
  public:
   // static factory function that sets up automatic connection tracking
-  static boost::shared_ptr<TextView> create(Document& doc) {
-    // XXX boost::shared_ptr<TextView> new_view = boost::make_shared<TextView>(doc);
-    boost::shared_ptr<TextView> new_view(new TextView(doc));
+  static std::shared_ptr<TextView> create(Document& doc) {
+    std::shared_ptr<TextView> new_view(new TextView(doc));
     {
       typedef Document::signal_t::slot_type slot_type;
       slot_type myslot(&TextView::refresh, new_view.get());
-      doc.connect(myslot.track(new_view));
+      doc.connect(myslot.track_foreign(new_view));
     }
     return new_view;
   }
@@ -75,13 +73,12 @@ class TextView {
 class HexView {
  public:
   // static factory function that sets up automatic connection tracking
-  static boost::shared_ptr<HexView> create(Document& doc) {
-    // XXX boost::shared_ptr<HexView> new_view = boost::make_shared<HexView>(doc);
-    boost::shared_ptr<HexView> new_view(new HexView(doc));
+  static std::shared_ptr<HexView> create(Document& doc) {
+    std::shared_ptr<HexView> new_view(new HexView(doc));
     {
       typedef Document::signal_t::slot_type slot_type;
       slot_type myslot(&HexView::refresh, new_view.get());
-      doc.connect(myslot.track(new_view));
+      doc.connect(myslot.track_foreign(new_view));
     }
     return new_view;
   }
@@ -111,10 +108,10 @@ int main(int argc, char* argv[]) {
   using namespace std::chrono_literals;
 
   Document doc;
-  boost::shared_ptr<TextView> v1 = TextView::create(doc);
+  auto v1 = TextView::create(doc); // NOTE: The Document must exists as long as the view! CK
 
   auto result = std::thread([&] {
-    boost::shared_ptr<HexView> v2 = HexView::create(doc);
+    auto v2 = HexView::create(doc);
 
     std::this_thread::sleep_for(100us);
     doc.append(" ... conccurend signal!");

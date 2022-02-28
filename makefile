@@ -21,7 +21,7 @@ BENCHMARKSOURCES = $(shell find $(BENCHMARKDIR) -type f -name '*.cpp')
 BENCHMARKOBJECTS = $(patsubst $(BENCHMARKDIR)/%.cpp, $(OBJDIR)/%.o, $(BENCHMARKSOURCES))
 BENCHMARKS = $(patsubst $(OBJDIR)/%.o, $(OUTDIR)/%, $(BENCHMARKOBJECTS))
 
-.phony: all clean tests examples benchmarks
+.PHONY: all clean tests examples benchmarks
 all: tests examples benchmarks
 
 $(OBJDIR):
@@ -45,6 +45,7 @@ $(EXAMPLES): LDFLAGS += -fsanitize=thread
 $(EXAMPLES): CXXFLAGS += -fsanitize=thread
 $(EXAMPLES): $(EXAMPLEOBJECTS)
 	$(CXX) $(LDFLAGS) -o $@ $(patsubst $(OUTDIR)%, $(OBJDIR)%.o, $@)
+	$(@)
 
 $(EXAMPLEOBJECTS): $(EXAMPLESOURCES)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $(patsubst $(OBJDIR)%.o, $(EXAMPLEDIR)%.cpp, $@) -o $@

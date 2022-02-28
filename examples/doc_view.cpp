@@ -23,7 +23,7 @@ class Document {
   typedef boost::signals2::signal<void()> signal_t;
 
  public:
-  Document() {}
+  Document() = default;
 
   // Connect a slot to the signal which will be emitted whenever text is appended to the document.
   boost::signals2::connection connect(const signal_t::slot_type& subscriber) { return m_sig.connect(subscriber); }
@@ -87,7 +87,7 @@ int main(int argc, char* argv[]) {
   using namespace std::chrono_literals;
 
   Document doc;
-  TextView v1(doc);
+  TextView v1(doc); // NOTE: The Document must exists as long as the view! CK
 
   auto result = std::thread([&] {
     HexView v2(doc);
