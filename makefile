@@ -1,4 +1,4 @@
-CXX = clang++
+CXX = ccache clang++
 CXXFLAGS = -std=c++20 -Wall -Wextra -Wpedantic -O1
 CPPFLAGS = -I include -I/usr/local/include
 LDFLAGS  =
@@ -41,8 +41,8 @@ $(TESTOBJECTS): $(TESTSOURCES)
 
 examples: $(OBJDIR) $(OUTDIR) $(EXAMPLES)
 
-$(EXAMPLES): LDFLAGS += -fsanitize=thread
-$(EXAMPLES): CXXFLAGS += -fsanitize=thread
+# $(EXAMPLES): LDFLAGS += -fsanitize=thread
+# $(EXAMPLES): CXXFLAGS += -fsanitize=thread
 $(EXAMPLES): $(EXAMPLEOBJECTS)
 	$(CXX) $(LDFLAGS) -o $@ $(patsubst $(OUTDIR)%, $(OBJDIR)%.o, $@)
 	$(@)

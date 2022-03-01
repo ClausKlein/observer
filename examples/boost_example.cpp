@@ -26,7 +26,6 @@ class Document {
  public:
   typedef boost::signals2::signal<void()> signal_t;
 
- public:
   Document() = default;
 
   // connect a slot to the signal which will be emitted whenever text is appended to the document.
@@ -50,12 +49,12 @@ class Document {
 class TextView {
  public:
   // static factory function that sets up automatic connection tracking
-  static std::shared_ptr<TextView> create(Document& doc) {
-    std::shared_ptr<TextView> new_view(new TextView(doc));
+  static boost::shared_ptr<TextView> create(Document& doc) {
+    boost::shared_ptr<TextView> new_view(new TextView(doc));
     {
       typedef Document::signal_t::slot_type slot_type;
       slot_type myslot(&TextView::refresh, new_view.get());
-      doc.connect(myslot.track_foreign(new_view));
+      doc.connect(myslot.track(new_view));
     }
     return new_view;
   }
@@ -64,7 +63,7 @@ class TextView {
 
  private:
   // private constructor to force use of static factory function
-  TextView(Document& doc) : m_document(doc) {}
+  explicit TextView(Document& doc) : m_document(doc) {}
 
   Document& m_document;
 };
@@ -73,12 +72,12 @@ class TextView {
 class HexView {
  public:
   // static factory function that sets up automatic connection tracking
-  static std::shared_ptr<HexView> create(Document& doc) {
-    std::shared_ptr<HexView> new_view(new HexView(doc));
+  static boost::shared_ptr<HexView> create(Document& doc) {
+    boost::shared_ptr<HexView> new_view(new HexView(doc));
     {
       typedef Document::signal_t::slot_type slot_type;
       slot_type myslot(&HexView::refresh, new_view.get());
-      doc.connect(myslot.track_foreign(new_view));
+      doc.connect(myslot.track(new_view));
     }
     return new_view;
   }
@@ -97,7 +96,7 @@ class HexView {
 
  private:
   // private constructor to force use of static factory function
-  HexView(Document& doc) : m_document(doc) {}
+  explicit HexView(Document& doc) : m_document(doc) {}
 
   Document& m_document;
 };
@@ -108,6 +107,7 @@ int main(int argc, char* argv[]) {
   using namespace std::chrono_literals;
 
   Document doc;
+  {
   auto v1 = TextView::create(doc); // NOTE: The Document must exists as long as the view! CK
 
   auto result = std::thread([&] {
@@ -128,6 +128,7 @@ int main(int argc, char* argv[]) {
 
   result.join();
   doc.append(" ... HexView should no longer be connected!");
+  }
 
   return 0;
 }
